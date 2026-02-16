@@ -3,214 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ගොවිතැනේ සම්පූර්ණ කතාව</title>
+    <title>ගොවියෙකුගේ චාරිකාව</title>
     <style>
-        :root { --sky: #87CEEB; --grass: #76b041; --dirt: #5d4037; --tractor-red: #d32f2f; }
-        body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #222; font-family: 'Segoe UI', sans-serif; color: white; }
-        
-        #stage {
-            position: relative; width: 800px; height: 450px;
-            background: linear-gradient(to bottom, var(--sky) 65%, var(--grass) 65%);
-            border: 10px solid #444; border-radius: 10px; overflow: hidden;
+        :root { --sky: #87CEEB; --grass: #76b041; --soil: #5d4037; }
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #1a1a1a; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+
+        /* ප්‍රධාන තිරය */
+        #game-container {
+            position: relative; width: 900px; height: 500px;
+            background: var(--sky); border: 10px solid #333; border-radius: 15px;
+            overflow: hidden;
         }
 
-        /* පණිවිඩ කොටුව */
-        #status { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #0f0; padding: 12px 25px; border-radius: 5px; font-weight: bold; z-index: 100; border: 1px solid #0f0; width: 80%; text-align: center; }
+        /* චලනය වන පසුබිම (World Scrolling) */
+        #world {
+            position: absolute; width: 4000px; height: 100%;
+            display: flex; align-items: flex-end;
+            transition: transform 2s ease-in-out;
+        }
 
-        /* කැලෑව (Forest) */
-        #jungle { position: absolute; bottom: 157px; width: 100%; height: 60px; background: #1b5e20; z-index: 5; transition: 1s; }
+        .ground { position: absolute; bottom: 0; height: 150px; background: var(--grass); border-top: 5px solid #558b2f; }
 
-        /* හාන ලද පස */
-        #tilled-soil { position: absolute; bottom: 157px; left: 0; width: 0%; height: 60px; background: var(--dirt); z-index: 6; transition: width 0.1s linear; }
+        /* දර්ශන (Scenes) */
+        .scene { position: relative; width: 1000px; height: 100%; flex-shrink: 0; }
+
+        /* 1. කැලෑව */
+        .jungle-patch { position: absolute; bottom: 150px; width: 100%; height: 80px; background: #1b5e20; transition: 1s; }
+
+        /* 2. හාන පස (ස්වභාවික ලෙස) */
+        .plowed-field { position: absolute; bottom: 150px; width: 100%; height: 80px; background: var(--soil); display: none; border-top: 3px dashed #3e2723; }
 
         /* ගොවියා */
-        #farmer { position: absolute; bottom: 120px; left: -100px; width: 40px; height: 75px; transition: 1s ease; z-index: 50; }
-        .f-body { width: 30px; height: 45px; background: #1565c0; border-radius: 5px; position: relative; }
-        .f-head { width: 22px; height: 22px; background: #ffe0bd; border-radius: 50%; position: absolute; top: -22px; left: 4px; }
-        .f-hat { width: 34px; height: 8px; background: #5d4037; position: absolute; top: -5px; left: -2px; border-radius: 10px; }
-        
-        /* ආයුධ */
+        #farmer {
+            position: absolute; bottom: 140px; left: 100px; width: 40px; height: 80px;
+            z-index: 100; transition: left 1s linear;
+        }
+        .f-body { width: 30px; height: 50px; background: #1565c0; border-radius: 5px; position: relative; }
+        .f-head { width: 25px; height: 25px; background: #ffe0bd; border-radius: 50%; position: absolute; top: -24px; left: 3px; border: 1px solid #d4a373; }
+        .f-hat { width: 38px; height: 8px; background: #5d4037; position: absolute; top: -5px; left: -4px; border-radius: 5px; }
+
+        /* උපකරණ */
         .tool { position: absolute; right: -15px; top: 15px; width: 5px; height: 40px; background: #444; display: none; transform-origin: top; }
-        .machete-blade { position: absolute; bottom: 0; width: 20px; height: 8px; background: #aaa; border-radius: 0 5px 5px 0; }
         .hoe-head { position: absolute; bottom: 0; right: -10px; width: 15px; height: 5px; background: #111; }
 
-        /* පොහොර ඇනිමේෂන් */
-        #fertilizer-spray { position: absolute; width: 20px; height: 20px; display: none; z-index: 60; }
-        .dot { position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%; animation: spray 0.5s infinite; }
-
         /* වාහන */
-        .vehicle { position: absolute; bottom: 125px; display: none; z-index: 40; transition: left 0.1s linear; }
-        #tractor { width: 100px; height: 60px; }
-        #lorry { width: 140px; height: 70px; }
+        #tractor { position: absolute; bottom: 145px; left: -300px; font-size: 60px; transition: left 0.1s linear; z-index: 90; }
+        #lorry { position: absolute; bottom: 145px; left: 2100px; font-size: 70px; z-index: 90; transition: left 1s; }
 
-        /* වගාව */
-        #plant { position: absolute; bottom: 157px; left: 50%; transform: translateX(-50%) scale(0); transform-origin: bottom; transition: 2s; z-index: 20; }
-        .stalk { width: 10px; height: 100px; background: #4caf50; border-radius: 5px; position: relative; }
-        .cob { position: absolute; top: 20px; right: -10px; width: 15px; height: 30px; background: #ffeb3b; border-radius: 5px; border: 2px solid #fbc02d; opacity: 0; transition: 1s; }
-        .mound { position: absolute; bottom: -5px; left: -15px; width: 40px; height: 15px; background: #3e2723; border-radius: 50%; opacity: 0; }
+        /* කඩය සහ මුදලාලි */
+        .shop { position: absolute; bottom: 150px; left: 3200px; width: 200px; height: 150px; background: #ffb74d; border: 5px solid #f57c00; text-align: center; }
+        .mudali { position: absolute; bottom: 0; left: 20px; font-size: 40px; }
+        .scale { position: absolute; bottom: 0; right: 20px; font-size: 30px; }
 
-        /* සාප්පුව සහ බෑග් */
-        #shop { position: absolute; bottom: 150px; right: -200px; width: 150px; height: 100px; background: #ffb74d; border: 4px solid #f57c00; transition: 1s; z-index: 10; }
-        #bag { position: absolute; bottom: 130px; left: 50%; width: 40px; height: 50px; background: #9e9e9e; display: none; z-index: 30; }
+        /* ගෙදර */
+        .home { position: absolute; bottom: 150px; left: 300px; font-size: 100px; }
 
-        @keyframes spray { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(20px) translateX(10px); } }
-        @keyframes cut { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-60deg); } }
-        .anim-cut { animation: cut 0.4s infinite; }
+        /* අස්වැන්න */
+        .plant { position: absolute; bottom: 150px; left: 500px; transform: scale(0); transition: 2s; }
+        .stalk { width: 10px; height: 100px; background: #4caf50; }
+        .cob { width: 15px; height: 30px; background: yellow; border-radius: 5px; position: absolute; top: 20px; right: -10px; opacity: 0; }
+        .bag { position: absolute; bottom: 150px; left: 2400px; font-size: 40px; display: none; }
 
-        button { margin-top: 20px; padding: 15px 40px; background: #4caf50; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #388e3c; }
+        /* පණිවිඩය */
+        #status-bar { position: absolute; top: 20px; width: 100%; text-align: center; z-index: 200; }
+        .msg { background: rgba(0,0,0,0.8); color: white; padding: 10px 30px; border-radius: 30px; font-weight: bold; font-size: 18px; border: 2px solid #fff; }
+
+        button { margin-top: 20px; padding: 15px 40px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 18px; cursor: pointer; }
+
+        @keyframes action { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-45deg); } }
+        .working { animation: action 0.5s infinite; }
     </style>
 </head>
 <body>
 
-    <div id="stage">
-        <div id="status">ගොවිතැනේ කතාව පටන් ගැනීමට බොත්තම ඔබන්න...</div>
-        
-        <div id="jungle"></div>
-        <div id="tilled-soil"></div>
-        
-        <div id="tractor" class="vehicle">🚜<div style="font-size: 10px; color: black; background: white; display: inline-block;">හාන යන්ත්‍රය</div></div>
-        
-        <div id="plant">
-            <div id="mound" class="mound"></div>
-            <div class="stalk"><div id="cob" class="cob"></div></div>
-        </div>
+    <div id="game-container">
+        <div id="status-bar"><span class="msg" id="status">කතාව ආරම්භ කිරීමට බොත්තම ඔබන්න...</span></div>
 
-        <div id="farmer">
-            <div class="f-body">
-                <div class="f-head"><div class="f-hat"></div></div>
-                <div id="machete" class="tool"><div class="machete-blade"></div></div>
-                <div id="hoe" class="tool"><div class="hoe-head"></div></div>
-                <div id="fertilizer-spray">
-                    <div class="dot" style="left:0"></div><div class="dot" style="left:10px"></div><div class="dot" style="left:5px; top:5px"></div>
+        <div id="world">
+            <div class="scene">
+                <div class="ground" style="width: 1000px;"></div>
+                <div id="jungle" class="jungle-patch"></div>
+                <div id="field" class="plowed-field"></div>
+                <div id="plant" class="plant"><div class="stalk"><div id="cob" class="cob"></div></div></div>
+            </div>
+
+            <div class="scene">
+                <div class="ground" style="width: 1000px; background: #999;"></div> <div id="bag" class="bag">💰</div>
+            </div>
+
+            <div class="scene">
+                <div class="ground" style="width: 1000px;"></div>
+                <div class="shop">
+                    <div class="mudali">👨‍💼</div>
+                    <div class="scale">⚖️</div>
+                    <div style="margin-top: 10px; font-weight: bold;">ගොවි නිෂ්පාදන</div>
                 </div>
             </div>
-        </div>
 
-        <div id="bag"></div>
-        <div id="lorry" class="vehicle">🚚<div style="font-size: 10px; color: black; background: white; display: inline-block;">අස්වැන්න ලොරිය</div></div>
-        <div id="shop"> <div style="text-align: center; margin-top: 20px; font-weight: bold; color: black;">ඉරිඟු ගබඩාව</div></div>
+            <div class="scene">
+                <div class="ground" style="width: 1000px;"></div>
+                <div class="home">🏡</div>
+            </div>
+
+            <div id="farmer">
+                <div class="f-body">
+                    <div class="f-head"><div class="f-hat"></div></div>
+                    <div id="hoe" class="tool"><div class="hoe-head"></div></div>
+                </div>
+            </div>
+
+            <div id="tractor">🚜<span style="font-size: 15px;">+🛒</span></div>
+            <div id="lorry">🚚</div>
+        </div>
     </div>
 
-    <button onclick="playWholeStory()">කතාව පටන් ගන්න 🌽</button>
+    <button onclick="startStory()">කතාව පටන් ගන්න 🌽</button>
 
     <script>
-        const delay = ms => new Promise(res => setTimeout(res, ms));
+        const wait = ms => new Promise(res => setTimeout(res, ms));
 
-        async function playWholeStory() {
+        async function startStory() {
+            const world = document.getElementById('world');
             const status = document.getElementById('status');
             const farmer = document.getElementById('farmer');
-            const machete = document.getElementById('machete');
-            const hoe = document.getElementById('hoe');
             const tractor = document.getElementById('tractor');
-            const jungle = document.getElementById('jungle');
-            const tilledSoil = document.getElementById('tilled-soil');
+            const hoe = document.getElementById('hoe');
+            const field = document.getElementById('field');
             const plant = document.getElementById('plant');
             const cob = document.getElementById('cob');
-            const mound = document.getElementById('mound');
-            const fSpray = document.getElementById('fertilizer-spray');
-            const bag = document.getElementById('bag');
-            const lorry = document.getElementById('lorry');
-            const shop = document.getElementById('shop');
 
             // Reset
-            farmer.style.left = '-100px';
-            jungle.style.width = '100%'; jungle.style.opacity = '1';
-            tilledSoil.style.width = '0%';
-            plant.style.transform = 'translateX(-50%) scale(0)';
-            cob.style.opacity = '0'; mound.style.opacity = '0';
-            bag.style.display = 'none'; lorry.style.display = 'none'; shop.style.right = '-200px';
-
-            // 1. කැලෑව කැපීම
+            world.style.transform = "translateX(0px)";
+            farmer.style.left = "100px";
             status.innerText = "1. ගොවියා කැත්තක් ගෙන කැලෑව කපයි...";
-            farmer.style.left = '40%';
-            await delay(1500);
-            machete.style.display = 'block';
-            machete.classList.add('anim-cut');
-            await delay(2000);
-            jungle.style.opacity = '0';
-            machete.classList.remove('anim-cut');
-            machete.style.display = 'none';
+            
+            // 1. කැලෑව කැපීම
+            await wait(2000);
+            document.getElementById('jungle').style.opacity = "0";
 
-            // 2. ට්‍රැක්ටරයෙන් හෑීම
-            status.innerText = "2. ට්‍රැක්ටරය පැමිණ ඉඩම හායි...";
-            farmer.style.left = '-100px';
-            await delay(1000);
-            tractor.style.display = 'block';
-            for(let i=0; i<=100; i+=2) {
-                tractor.style.left = i + '%';
-                tilledSoil.style.width = i + '%';
-                await delay(50);
+            // 2. ට්‍රැක්ටරය (ටේලරය සහිතව) හානවා
+            status.innerText = "2. ට්‍රැක්ටරය (ටේලරය සහිත) පැමිණ ඉඩම හායි...";
+            for(let i = -300; i < 1000; i += 10) {
+                tractor.style.left = i + "px";
+                if(i > 0) { field.style.display = "block"; field.style.width = i + "px"; }
+                await wait(30);
             }
-            tractor.style.display = 'none';
+            tractor.style.display = "none";
 
             // 3. බීජ සිටුවීම
-            status.innerText = "3. උදැල්ලෙන් වලවල් කපා බීජ සිටුවයි...";
-            farmer.style.left = '45%';
-            await delay(1200);
-            hoe.style.display = 'block';
-            hoe.classList.add('anim-cut');
-            await delay(2000);
-            hoe.classList.remove('anim-cut');
-            hoe.style.display = 'none';
+            status.innerText = "3. උදැල්ලෙන් වල හාරා බීජ සිටුවයි...";
+            farmer.style.left = "450px";
+            await wait(1000);
+            hoe.style.display = "block"; hoe.classList.add('working');
+            await wait(2000);
+            hoe.classList.remove('working'); hoe.style.display = "none";
 
-            // 4. පලමු වරට පොහොර සහ පස්
-            status.innerText = "4. ගස වැඩුනු පසු පලමු වරට පොහොර සහ පස් දමයි...";
-            plant.style.transform = 'translateX(-50%) scale(0.6)';
-            await delay(2000);
-            fSpray.style.display = 'block';
-            await delay(1500);
-            mound.style.opacity = '1';
-            fSpray.style.display = 'none';
+            // 4 & 5. පොහොර සහ වර්ධනය
+            status.innerText = "4. ගස වැඩේ. පොහොර සහ පස් දමයි...";
+            plant.style.transform = "scale(1)";
+            await wait(3000);
+            status.innerText = "5. දෙවන වරට පොහොර යොදයි. කරල් පීදෙයි...";
+            cob.style.opacity = "1";
+            await wait(2000);
 
-            // 5. දෙවන වරට පොහොර පමණක්
-            status.innerText = "5. දෙවන වරට පොහොර පමණක් යොදයි...";
-            plant.style.transform = 'translateX(-50%) scale(1.1)';
-            await delay(2000);
-            fSpray.style.display = 'block';
-            await delay(1500);
-            fSpray.style.display = 'none';
+            // 6, 7, 8. අස්වැන්න නෙලා බෑග් කිරීම
+            status.innerText = "6-8. අස්වැන්න නෙලා බෑග් කර ලොරියට පටවයි...";
+            cob.style.opacity = "0"; plant.style.opacity = "0";
+            const lorry = document.getElementById('lorry');
+            lorry.style.left = "1200px";
+            await wait(2000);
 
-            // 6. කරල් හැදීම
-            status.innerText = "6. කරල් හැදී අස්වැන්න සූදානම්...";
-            cob.style.opacity = '1';
-            await delay(2000);
+            // 9. ලොරිය කඩයට යාම (Scene Shift)
+            status.innerText = "9. අස්වැන්න ලොරියෙන් කඩයට රැගෙන යයි...";
+            world.style.transform = "translateX(-2000px)"; // කඩය දෙසට කැමරාව යයි
+            farmer.style.left = "2300px";
+            lorry.style.left = "3100px";
+            await wait(3000);
 
-            // 7 & 8. කැඩීම සහ බෑග් කිරීම
-            status.innerText = "7-8. අස්වැන්න නෙලා බෑග් වලට පුරවයි...";
-            await delay(1500);
-            cob.style.opacity = '0';
-            plant.style.transform = 'translateX(-50%) scale(0)';
-            bag.style.display = 'block';
-            await delay(1500);
+            // 10. බර කිරා සල්ලි දීම
+            status.innerText = "10. මුදලාලි බර කිරා අස්වැන්නට මුදල් ගෙවයි...";
+            farmer.style.left = "3150px";
+            await wait(2000);
+            status.innerText = "මුදලාලි: 'හොඳ අස්වැන්නක්! මෙන්න ඔබේ මුදල්.' 💰";
+            await wait(3000);
 
-            // 9. ලොරියෙන් ප්‍රවාහනය
-            status.innerText = "9. ලොරිය පැමිණ අස්වැන්න කඩයට රැගෙන යයි...";
-            lorry.style.display = 'block';
-            lorry.style.left = '0%';
-            await delay(1000);
-            lorry.style.left = '40%';
-            await delay(1000);
-            bag.style.display = 'none'; // ලොරියට පැටවීම
-            status.innerText = "ලොරිය කඩයට යයි...";
-            shop.style.right = '0px';
-            await delay(1000);
-            lorry.style.left = '80%';
-            await delay(2000);
-
-            // 10. බර කිරා මුදල් ගැනීම
-            status.innerText = "10. කඩයේදී බර කිරා මුදලාලි මුදල් ගෙවයි...";
-            farmer.style.left = '65%';
-            await delay(2000);
-            status.innerText = "මුදලාලි: 'මෙන්න ඔබේ රුපියල් 50,000!' 💰";
-            await delay(2500);
-
-            // 11. නිවසට පැමිණීම
-            status.innerText = "11. ගොවියා සතුටින් නිවස බලා පැමිණෙයි. 😊";
-            farmer.style.transform = 'scaleX(-1)';
-            farmer.style.left = '-100px';
-            await delay(2000);
-            status.innerText = "කතාව අවසන්! සාර්ථක අස්වැන්නක්!";
+            // 11. සතුටින් ගෙදර යෑම (Scene Shift)
+            status.innerText = "11. ගොවියා සතුටින් නිවස බලා පැමිණෙයි...";
+            world.style.transform = "translateX(-3000px)"; // ගෙදර දෙසට කැමරාව යයි
+            farmer.style.transform = "scaleX(-1)";
+            farmer.style.left = "3300px";
+            await wait(3000);
+            status.innerText = "සාර්ථක අවසානයක්! ගොවියා දැන් නිවසේ. 😊";
         }
     </script>
 </body>
