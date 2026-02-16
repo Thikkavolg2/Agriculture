@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ගොවියෙකුගේ කතාව - කාටූන් ඇනිමේෂන්</title>
+    <style>
+        /* --- Background & Layout --- */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #e0f7fa;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        #animation-frame {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            background: linear-gradient(to bottom, #87CEEB 65%, #76b041 65%);
+            border: 8px solid #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        /* --- Scenery --- */
+        .sun {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            width: 50px;
+            height: 50px;
+            background: #ffeb3b;
+            border-radius: 50%;
+            box-shadow: 0 0 20px #fdd835;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            width: 80px;
+            height: 30px;
+            border-radius: 20px;
+            opacity: 0.8;
+            animation: moveClouds 20s linear infinite;
+        }
+        @keyframes moveClouds {
+            from { left: -100px; }
+            to { left: 600px; }
+        }
+
+        /* --- Farmer --- */
+        .farmer {
+            position: absolute;
+            bottom: 120px;
+            left: -100px;
+            width: 50px;
+            height: 80px;
+            transition: left 1.5s ease;
+            z-index: 10;
+        }
+        .farmer-body {
+            width: 30px;
+            height: 50px;
+            background: #1e88e5;
+            border-radius: 8px;
+            position: relative;
+        }
+        .farmer-head {
+            width: 25px;
+            height: 25px;
+            background: #ffe0bd;
+            border-radius: 50%;
+            position: absolute;
+            top: -22px;
+            left: 2px;
+            border: 1px solid #d4a373;
+        }
+        .hat {
+            width: 35px;
+            height: 8px;
+            background: #795548;
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            border-radius: 5px;
+        }
+
+        /* --- Tool (Hoe) --- */
+        .hoe {
+            position: absolute;
+            right: -15px;
+            top: 20px;
+            width: 4px;
+            height: 40px;
+            background: #5d4037;
+            transform-origin: top;
+        }
+        .hoe-head {
+            position: absolute;
+            bottom: 0;
+            right: -10px;
+            width: 15px;
+            height: 4px;
+            background: #424242;
+        }
+
+        /* --- Farming Elements --- */
+        .soil-mound {
+            position: absolute;
+            bottom: 130px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 20px;
+            background: #5d4037;
+            border-radius: 50%;
+            display: none;
+        }
+
+        .corn-plant {
+            position: absolute;
+            bottom: 135px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom;
+            transition: transform 4s ease-out;
+        }
+        .stalk {
+            width: 10px;
+            height: 100px;
+            background: #4caf50;
+            border-radius: 5px;
+        }
+        .corn-fruit {
+            position: absolute;
+            top: 30px;
+            right: -10px;
+            width: 15px;
+            height: 30px;
+            background: #ffeb3b;
+            border-radius: 40% 40% 20% 20%;
+            border: 2px solid #fbc02d;
+            opacity: 0;
+            transition: opacity 1s 3s;
+        }
+
+        /* --- UI Elements --- */
+        .status-box {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #fff;
+            border-radius: 30px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 25px;
+            background: #fb8c00;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* --- Animations Classes --- */
+        .digging { animation: dig 0.5s infinite; }
+        @keyframes dig {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-40deg); }
+        }
+
+        .grow { transform: translateX(-50%) scale(1.2) !important; }
+        .show-fruit { opacity: 1 !important; }
+
+    </style>
+</head>
+<body>
+
+    <div id="animation-frame">
+        <div class="sun"></div>
+        <div class="cloud" style="top: 40px; animation-delay: 0s;"></div>
+        <div class="cloud" style="top: 80px; animation-delay: 5s;"></div>
+
+        <div class="soil-mound" id="soil"></div>
+
+        <div class="corn-plant" id="plant">
+            <div class="stalk">
+                <div class="corn-fruit" id="fruit"></div>
+            </div>
+        </div>
+
+        <div class="farmer" id="farmer">
+            <div class="farmer-body">
+                <div class="farmer-head"><div class="hat"></div></div>
+                <div class="hoe" id="hoe"><div class="hoe-head"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-box" id="status">ගොවිතැන ආරම්භ කරමු...</div>
+    <button onclick="startFarming()">වැඩේ පටන් ගන්න 🌽</button>
+
+    <script>
+        function startFarming() {
+            const farmer = document.getElementById('farmer');
+            const hoe = document.getElementById('hoe');
+            const soil = document.getElementById('soil');
+            const plant = document.getElementById('plant');
+            const fruit = document.getElementById('fruit');
+            const status = document.getElementById('status');
+
+            // Reset
+            plant.classList.remove('grow');
+            fruit.classList.remove('show-fruit');
+            soil.style.display = 'none';
+            farmer.style.left = '-100px';
+
+            // Step 1: ගොවියා පැමිණීම
+            setTimeout(() => {
+                status.innerText = "1. ගොවියා බිම සකස් කිරීමට එයි...";
+                farmer.style.left = "40%";
+            }, 500);
+
+            // Step 2: බිම කෙටීම
+            setTimeout(() => {
+                status.innerText = "2. පොළොව කොටා බීජය සිටුවයි...";
+                hoe.classList.add('digging');
+                setTimeout(() => {
+                    hoe.classList.remove('digging');
+                    soil.style.display = 'block';
+                }, 2000);
+            }, 2500);
+
+            // Step 3: ගස වැඩීම
+            setTimeout(() => {
+                status.innerText = "3. සති කිහිපයකට පසු ගස වැඩේ...";
+                farmer.style.left = "110%"; // ගොවියා ඉවත්ව යයි
+                plant.classList.add('grow');
+                fruit.classList.add('show-fruit');
+            }, 5500);
+
+            // Step 4: අස්වැන්න
+            setTimeout(() => {
+                status.innerText = "4. සාර්ථක අස්වැන්නක්! නිදහස් දිනට ඉරිඟු කරල් සූදානම්. 😍";
+            }, 9500);
+        }
+    </script>
+</body>
+</html>
